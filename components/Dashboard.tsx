@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { apiClient } from '@/lib/apiClient';
+import { API_ENDPOINTS } from '@/lib/api';
 import { UserProfile, UserRole } from '@/types/auth';
 
 export default function Dashboard() {
   const { user, userProfile, signOut, updateUserRole } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch all users (admin only)
   const fetchUsers = async () => {
@@ -17,20 +18,19 @@ export default function Dashboard() {
     
     setLoading(true);
     try {
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const usersData = usersSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          uid: doc.id,
-          email: data.email,
-          role: data.role,
-          displayName: data.displayName,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as UserProfile;
-      });
-      setUsers(usersData);
+      setError(null);
+      const response = await apiClient.get<UserProfile[]>(API_ENDPOINTS.AUTH.USERS);
+      if (response.success && response.data) {
+        // Convert date strings to Date objects
+        const usersWithDates = response.data.map(user => ({
+          ...user,
+          createdAt: new Date(user.createdAt),
+          updatedAt: new Date(user.updatedAt),
+        }));
+        setUsers(usersWithDates);
+      }
     } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to fetch users');
       console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
@@ -40,11 +40,21 @@ export default function Dashboard() {
   // Update user role
   const handleRoleUpdate = async (uid: string, newRole: UserRole) => {
     try {
+      setError(null);
       await updateUserRole(uid, newRole);
       // Refresh users list
       await fetchUsers();
     } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to update role');
       console.error('Error updating user role:', error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to sign out');
     }
   };
 
@@ -53,14 +63,6 @@ export default function Dashboard() {
       fetchUsers();
     }
   }, [userProfile?.role]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,6 +97,13 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {/* Error Display */}
+        {error && (
+          <div className="mx-4 mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        
         <div className="px-4 py-6 sm:px-0">
           {/* User Info Card */}
           <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
@@ -129,9 +138,18 @@ export default function Dashboard() {
           {userProfile?.role === 'admin' && (
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  User Management (Admin Only)
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    User Management (Admin Only)
+                  </h3>
+                  <button
+                    onClick={fetchUsers}
+                    disabled={loading}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded text-sm"
+                  >
+                    {loading ? 'Loading...' : 'Refresh'}
+                  </button>
+                </div>
                 
                 {loading ? (
                   <div className="text-center py-4">Loading users...</div>

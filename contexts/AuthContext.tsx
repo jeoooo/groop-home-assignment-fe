@@ -5,21 +5,17 @@ import {
   User, 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  updateProfile
+  signOut as firebaseSignOut
 } from 'firebase/auth';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs 
-} from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { UserProfile, UserRole, AuthState } from '@/types/auth';
+import { apiClient } from '@/lib/apiClient';
+import { API_ENDPOINTS } from '@/lib/api';
+
+interface AuthResponse {
+  user: UserProfile;
+  token: string;
+}
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
@@ -36,19 +32,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user profile from Firestore
-  const fetchUserProfile = async (user: User): Promise<UserProfile | null> => {
+  // Fetch user profile from backend
+  const fetchUserProfile = async (): Promise<UserProfile | null> => {
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
+      const response = await apiClient.get<UserProfile>(API_ENDPOINTS.AUTH.ME);
+      if (response.success && response.data) {
         return {
-          uid: user.uid,
-          email: user.email!,
-          role: data.role || 'user',
-          displayName: data.displayName || user.displayName,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
+          ...response.data,
+          createdAt: new Date(response.data.createdAt),
+          updatedAt: new Date(response.data.updatedAt),
         };
       }
       return null;
@@ -58,50 +50,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Create user profile in Firestore
-  const createUserProfile = async (user: User, role: UserRole = 'user', displayName?: string): Promise<UserProfile> => {
-    const userProfile: UserProfile = {
-      uid: user.uid,
-      email: user.email!,
-      role,
-      displayName: displayName || user.displayName || '',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
 
-    await setDoc(doc(db, 'users', user.uid), {
-      ...userProfile,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    return userProfile;
-  };
-
-  // Check if this is the first user (make them admin)
-  const isFirstUser = async (): Promise<boolean> => {
-    try {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('role', '==', 'admin'));
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.empty;
-    } catch (error) {
-      console.error('Error checking for first user:', error);
-      return false;
-    }
-  };
 
   // Sign in function
   const signIn = async (email: string, password: string) => {
     try {
       setError(null);
       setLoading(true);
+      
+      // First authenticate with Firebase to get ID token
       const result = await signInWithEmailAndPassword(auth, email, password);
-      const profile = await fetchUserProfile(result.user);
-      if (!profile) {
-        // Create profile if it doesn't exist (for backward compatibility)
-        const firstUser = await isFirstUser();
-        await createUserProfile(result.user, firstUser ? 'admin' : 'user');
+      const idToken = await result.user.getIdToken();
+
+      // Send ID token to backend for session creation
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNIN, {
+        idToken
+      });
+
+      if (response.success && response.data) {
+        // Store the JWT token
+        apiClient.setToken(response.data.token);
+        
+        // Set user profile with properly converted dates
+        setUserProfile({
+          ...response.data.user,
+          createdAt: new Date(response.data.user.createdAt),
+          updatedAt: new Date(response.data.user.updatedAt),
+        });
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
@@ -118,17 +93,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setLoading(true);
       
-      // Check if this will be the first user
-      const firstUser = await isFirstUser();
-      const userRole = role || (firstUser ? 'admin' : 'user');
+      // Create user account with backend
+      const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, {
+        email,
+        password,
+        displayName,
+        role
+      });
 
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Update the user's display name
-      await updateProfile(result.user, { displayName });
-      
-      // Create user profile in Firestore
-      await createUserProfile(result.user, userRole, displayName);
+      if (response.success && response.data) {
+        // Store the JWT token
+        apiClient.setToken(response.data.token);
+        
+        // Set user profile with properly converted dates
+        setUserProfile({
+          ...response.data.user,
+          createdAt: new Date(response.data.user.createdAt),
+          updatedAt: new Date(response.data.user.updatedAt),
+        });
+
+        // Also sign in to Firebase for client-side compatibility
+        await signInWithEmailAndPassword(auth, email, password);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setError(errorMessage);
@@ -142,7 +128,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setError(null);
+      
+      // Sign out from backend
+      await apiClient.post(API_ENDPOINTS.AUTH.SIGNOUT);
+      
+      // Clear token
+      apiClient.setToken(null);
+      
+      // Sign out from Firebase
       await firebaseSignOut(auth);
+      
       setUser(null);
       setUserProfile(null);
     } catch (error) {
@@ -160,10 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Only admins can update user roles');
       }
       
-      await setDoc(doc(db, 'users', uid), {
-        role,
-        updatedAt: new Date(),
-      }, { merge: true });
+      await apiClient.put(API_ENDPOINTS.AUTH.UPDATE_ROLE, {
+        uid,
+        role
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setError(errorMessage);
@@ -178,17 +173,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       
       if (user) {
-        const profile = await fetchUserProfile(user);
-        if (!profile) {
-          // Create profile if it doesn't exist
-          const firstUser = await isFirstUser();
-          const newProfile = await createUserProfile(user, firstUser ? 'admin' : 'user');
-          setUserProfile(newProfile);
-        } else {
-          setUserProfile(profile);
-        }
+        // If we have a Firebase user but no backend session, try to fetch profile
+        const profile = await fetchUserProfile();
+        setUserProfile(profile);
       } else {
+        // If no Firebase user, clear everything
         setUserProfile(null);
+        apiClient.setToken(null);
       }
       
       setLoading(false);

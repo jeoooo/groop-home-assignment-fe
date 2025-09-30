@@ -5,7 +5,7 @@ import AuthForms from '@/components/auth/AuthForms';
 import Dashboard from '@/components/Dashboard';
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { userProfile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -15,7 +15,7 @@ export default function Home() {
     );
   }
 
-  if (!user) {
+  if (!userProfile) {
     return <AuthForms />;
   }
 
