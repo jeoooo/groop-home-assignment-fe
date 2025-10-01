@@ -11,6 +11,7 @@ export interface FirebaseConfig {
 export interface EmulatorConfig {
   authPort: number;
   firestorePort: number;
+  storagePort: number;
 }
 
 /**
@@ -53,6 +54,7 @@ export function getEmulatorConfig(): EmulatorConfig {
   return {
     authPort: parseInt(process.env.NEXT_PUBLIC_AUTH_EMULATOR_PORT || '9099'),
     firestorePort: parseInt(process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_PORT || '8080'),
+    storagePort: parseInt(process.env.NEXT_PUBLIC_STORAGE_EMULATOR_PORT || '9199'),
   };
 }
 

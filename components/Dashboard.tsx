@@ -4,11 +4,18 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/api';
-import { UserProfile, UserRole } from '@/types/auth';
+import { UserProfile as UserProfileType, UserRole } from '@/types/auth';
+import PostsDashboard from './PostsDashboard';
+import UserProfile from './UserProfile';
 
-export default function Dashboard() {
+interface DashboardProps {
+  initialTab?: 'posts' | 'profile' | 'admin';
+}
+
+export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
   const { user, userProfile, signOut, updateUserRole } = useAuth();
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<UserProfileType[]>([]);
+  const [activeTab, setActiveTab] = useState<'posts' | 'profile' | 'admin'>(initialTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +26,7 @@ export default function Dashboard() {
     setLoading(true);
     try {
       setError(null);
-      const response = await apiClient.get<UserProfile[]>(API_ENDPOINTS.AUTH.USERS);
+      const response = await apiClient.get<UserProfileType[]>(API_ENDPOINTS.AUTH.USERS);
       if (response.success && response.data) {
         // Convert date strings to Date objects
         const usersWithDates = response.data.map(user => ({
@@ -95,6 +102,46 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('posts')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'posts'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Posts
+            </button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'profile'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Profile
+            </button>
+            {userProfile?.role === 'admin' && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'admin'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Admin Panel
+              </button>
+            )}
+          </nav>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Error Display */}
@@ -105,42 +152,17 @@ export default function Dashboard() {
         )}
         
         <div className="px-4 py-6 sm:px-0">
-          {/* User Info Card */}
-          <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                Your Account Information
-              </h3>
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Full name</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{userProfile?.displayName || 'Not set'}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Email address</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{userProfile?.email}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Role</dt>
-                  <dd className="mt-1 text-sm text-gray-900 capitalize">{userProfile?.role}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Member since</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {userProfile?.createdAt.toLocaleDateString()}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          {/* Admin Panel */}
-          {userProfile?.role === 'admin' && (
+          {/* Tab Content */}
+          {activeTab === 'posts' && <PostsDashboard />}
+          
+          {activeTab === 'profile' && <UserProfile />}
+          
+          {activeTab === 'admin' && userProfile?.role === 'admin' && (
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    User Management (Admin Only)
+                    User Management
                   </h3>
                   <button
                     onClick={fetchUsers}
@@ -179,8 +201,17 @@ export default function Dashboard() {
                         {users.map((user) => (
                           <tr key={user.uid}>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">
-                                {user.displayName || 'No name'}
+                              <div className="flex items-center">
+                                {user.imageURL && (
+                                  <img
+                                    src={user.imageURL}
+                                    alt="Profile"
+                                    className="w-8 h-8 rounded-full mr-3"
+                                  />
+                                )}
+                                <div className="text-sm font-medium text-gray-900">
+                                  {user.displayName || 'No name'}
+                                </div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -219,20 +250,6 @@ export default function Dashboard() {
                     </table>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
-
-          {/* User-specific content */}
-          {userProfile?.role === 'user' && (
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  User Dashboard
-                </h3>
-                <p className="text-gray-600">
-                  Welcome to your user dashboard. Here you can view your account information and access user-specific features.
-                </p>
               </div>
             </div>
           )}

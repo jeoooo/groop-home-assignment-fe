@@ -22,6 +22,7 @@ interface AuthContextType extends AuthState {
   signUp: (email: string, password: string, displayName: string, role?: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
   updateUserRole: (uid: string, role: UserRole) => Promise<void>;
+  updateProfile: (data: { displayName?: string; imageURL?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -166,6 +167,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Update user profile
+  const updateProfile = async (data: { displayName?: string; imageURL?: string }) => {
+    try {
+      setError(null);
+      
+      const response = await apiClient.put<UserProfile>(API_ENDPOINTS.AUTH.PROFILE, data);
+      
+      if (response.success && response.data) {
+        const updatedProfile = {
+          ...response.data,
+          createdAt: new Date(response.data.createdAt),
+          updatedAt: new Date(response.data.updatedAt),
+        };
+        setUserProfile(updatedProfile);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      setError(errorMessage);
+      throw error;
+    }
+  };
+
   // Listen to auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -197,6 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     updateUserRole,
+    updateProfile,
   };
 
   return (
