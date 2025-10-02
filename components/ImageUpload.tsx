@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { postsService } from '@/lib/postsService';
 
 interface ImageUploadProps {
@@ -67,7 +68,11 @@ export default function ImageUpload({
         });
       }, 100);
 
+      console.log('Starting image upload...', { fileName: file.name, fileSize: file.size, folder });
+      
       const result = await postsService.uploadImage(file, folder);
+      
+      console.log('Upload successful:', result);
       
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -80,7 +85,7 @@ export default function ImageUpload({
       
     } catch (error) {
       console.error('Error uploading image:', error);
-      setError(error instanceof Error ? error.message : 'Failed to upload image');
+      setError(error instanceof Error ? error.message : 'Failed to upload image. Please check your connection and try again.');
     } finally {
       setUploading(false);
       // Reset file input
@@ -116,9 +121,9 @@ export default function ImageUpload({
       <div
         className={`
           ${sizeClasses[size]} 
-          relative border-2 border-dashed border-gray-300 rounded-full 
+          relative border-2 border-dashed border-black/20 rounded-full 
           flex items-center justify-center cursor-pointer
-          hover:border-gray-400 transition-colors
+          hover:border-black/40 transition-colors
           ${uploading ? 'pointer-events-none' : ''}
         `}
         onClick={triggerFileSelect}
@@ -127,9 +132,11 @@ export default function ImageUpload({
       >
         {/* Current Image */}
         {currentImageURL && !uploading && (
-          <img
+          <Image
             src={currentImageURL}
             alt="Profile"
+            width={parseInt(sizeClasses[size].split(' ')[0].replace('w-', '')) * 4}
+            height={parseInt(sizeClasses[size].split(' ')[1].replace('h-', '')) * 4}
             className={`${sizeClasses[size]} rounded-full object-cover`}
           />
         )}
@@ -137,8 +144,8 @@ export default function ImageUpload({
         {/* Upload Placeholder */}
         {!currentImageURL && !uploading && (
           <div className="text-center">
-            <div className="text-gray-400 text-2xl mb-1">📷</div>
-            <div className="text-xs text-gray-500">Upload</div>
+            <div className="text-black/60 text-2xl mb-1">📷</div>
+            <div className="text-xs text-black/70">Upload</div>
           </div>
         )}
 
@@ -164,14 +171,14 @@ export default function ImageUpload({
                     cy="18"
                     r="16"
                     fill="none"
-                    stroke="#3b82f6"
+                    stroke="#000000"
                     strokeWidth="3"
                     strokeDasharray={`${uploadProgress}, 100`}
                     className="transition-all duration-300"
                   />
                 </svg>
               </div>
-              <div className="text-xs text-gray-600">{uploadProgress}%</div>
+              <div className="text-xs text-black/80">{uploadProgress}%</div>
             </div>
           </div>
         )}
@@ -183,7 +190,7 @@ export default function ImageUpload({
               e.stopPropagation();
               handleRemoveImage();
             }}
-            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 z-10"
+            className="absolute -top-1 -right-1 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-gray-800 z-10"
           >
             ✕
           </button>
@@ -215,7 +222,7 @@ export default function ImageUpload({
 
       {/* Upload Instructions */}
       {!uploading && (
-        <div className="mt-2 text-xs text-gray-500 text-center">
+        <div className="mt-2 text-xs text-black/60 text-center">
           {currentImageURL ? 'Click to change' : 'Click or drag to upload'}
           <br />
           Max 5MB • JPG, PNG, GIF

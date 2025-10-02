@@ -5,6 +5,7 @@ import {
   User, 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -94,10 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       setLoading(true);
       
-      // Create user account with backend
+      // First create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const idToken = await userCredential.user.getIdToken();
+      
+      // Send user data to backend to create profile
       const response = await apiClient.post<AuthResponse>(API_ENDPOINTS.AUTH.SIGNUP, {
-        email,
-        password,
+        idToken,
         displayName,
         role
       });
@@ -112,11 +116,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           createdAt: new Date(response.data.user.createdAt),
           updatedAt: new Date(response.data.user.updatedAt),
         });
-
-        // Also sign in to Firebase for client-side compatibility
-        await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (error) {
+      console.error('Signup error:', error);
       const errorMessage = error instanceof Error ? error.message : 'An error occurred';
       setError(errorMessage);
       throw error;

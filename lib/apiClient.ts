@@ -100,6 +100,9 @@ class ApiClient {
   async uploadFile<T>(endpoint: string, file: File, additionalData?: Record<string, string>): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     
+    console.log('Uploading file to:', url);
+    console.log('File details:', { name: file.name, size: file.size, type: file.type });
+    
     const formData = new FormData();
     formData.append('image', file);
     
@@ -107,15 +110,20 @@ class ApiClient {
       Object.entries(additionalData).forEach(([key, value]) => {
         formData.append(key, value);
       });
+      console.log('Additional data:', additionalData);
     }
 
     const headers: Record<string, string> = {};
 
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
+      console.log('Using auth token for upload');
+    } else {
+      console.warn('No auth token available for upload');
     }
 
     try {
+      console.log('Making upload request...');
       const response = await fetch(url, {
         method: 'POST',
         headers,
@@ -123,15 +131,23 @@ class ApiClient {
         credentials: 'include',
       });
 
-      const data = await response.json();
-
+      console.log('Upload response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('Upload failed with status:', response.status, 'Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
+
+      const data = await response.json();
+      console.log('Upload response data:', data);
 
       return data;
     } catch (error) {
       console.error('File upload failed:', error);
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Unable to connect to server. Please check if the backend is running.');
+      }
       throw error;
     }
   }
