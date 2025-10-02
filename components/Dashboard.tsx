@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import React, { useState, useEffect } from 'react';
+import { NotePencil, User, Gavel } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/api';
@@ -75,9 +76,9 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
   }, [userProfile?.role]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tabs = [
-    { id: 'posts', label: 'Posts', icon: '📝' },
-    { id: 'profile', label: 'Profile', icon: '👤' },
-    ...(userProfile?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: '⚙️' }] : []),
+    { id: 'posts', label: 'Posts', icon: <NotePencil size={22} /> },
+    { id: 'profile', label: 'Profile', icon: <User size={22} /> },
+    ...(userProfile?.role === 'admin' ? [{ id: 'admin', label: 'Admin', icon: <Gavel size={22} /> }] : []),
   ] as const;
 
   return (
@@ -128,8 +129,8 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
                       : 'text-gray-700 hover:text-black'
                   }`}
                 >
-                  <span className="text-sm sm:hidden">{tab.icon}</span>
-                  <span className="hidden sm:inline">{tab.icon}</span>
+                  <span className="flex items-center sm:hidden">{tab.icon}</span>
+                  <span className="hidden sm:flex sm:items-center">{tab.icon}</span>
                   <span className="truncate">{tab.label}</span>
                 </button>
               ))}

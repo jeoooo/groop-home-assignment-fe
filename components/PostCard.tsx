@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Post } from '@/types/posts';
 import { useAuth } from '@/contexts/AuthContext';
 import { postsService } from '@/lib/postsService';
+import { Pencil, Trash } from "@phosphor-icons/react";
 
 interface PostCardProps {
   post: Post;
@@ -112,7 +113,7 @@ export default function PostCard({ post, onEdit, onDelete, onPin }: PostCardProp
               className="p-2 rounded-md text-sm font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 disabled:opacity-50"
               title="Edit post"
             >
-              ✏️
+              <Pencil size={22} />
             </button>
           )}
           
@@ -123,7 +124,7 @@ export default function PostCard({ post, onEdit, onDelete, onPin }: PostCardProp
               className="p-2 rounded-md text-sm font-medium bg-red-100 text-red-800 hover:bg-red-200 disabled:opacity-50"
               title="Delete post"
             >
-              🗑️
+              <Trash size={22} />
             </button>
           )}
         </div>

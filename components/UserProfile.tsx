@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ImageUpload from './ImageUpload';
+import { User } from '@phosphor-icons/react';
 
 export default function UserProfile() {
   const { userProfile, updateProfile } = useAuth();
@@ -106,7 +107,8 @@ export default function UserProfile() {
                 />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-2xl text-gray-400">👤</span>
+                  {/* <span className="text-2xl text-gray-400">👤</span> */}
+                  <User size={22} color="#000000FF"/>
                 </div>
               )}
             </div>

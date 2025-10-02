@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@react-aria/button": "^3.14.1",
     "@react-aria/dialog": "^3.5.30",
     "@react-aria/focus": "^3.21.1",
