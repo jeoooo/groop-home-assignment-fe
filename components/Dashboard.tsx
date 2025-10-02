@@ -81,18 +81,18 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-white">
       {/* Mobile-first Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <header className="bg-black shadow-sm border-b border-gray-300">
         <Container>
           <div className="py-4 space-y-4">
             {/* Top row: Welcome message and user info */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <h1 className="text-responsive-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
+                <h1 className="text-responsive-2xl font-bold text-white font-primary truncate">
                   Dashboard
                 </h1>
-                <p className="text-responsive-sm text-gray-600 dark:text-gray-400 truncate">
+                <p className="text-responsive-sm text-gray-300 truncate">
                   Welcome back, {userProfile?.displayName || user?.email}
                 </p>
               </div>
@@ -101,8 +101,8 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
               <div className="flex items-center gap-3 flex-shrink-0">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   userProfile?.role === 'admin' 
-                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
-                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                    ? 'bg-white text-black border border-gray-300' 
+                    : 'bg-gray-800 text-white border border-gray-600'
                 }`}>
                   {userProfile?.role}
                 </span>
@@ -117,15 +117,15 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
             </div>
 
             {/* Mobile-optimized Navigation Tabs */}
-            <nav className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <nav className="flex space-x-1 bg-gray-200 rounded-lg p-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as 'posts' | 'profile' | 'admin')}
                   className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                     activeTab === tab.id
-                      ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                      ? 'bg-black text-white shadow-sm'
+                      : 'text-gray-700 hover:text-black'
                   }`}
                 >
                   <span className="text-sm sm:hidden">{tab.icon}</span>
@@ -144,7 +144,7 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
           {/* Error Display */}
           {error && (
             <div 
-              className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg text-sm"
+              className="mb-6 p-4 bg-gray-100 border border-gray-400 text-black rounded-lg text-sm"
               role="alert"
               aria-live="polite"
             >
@@ -175,7 +175,7 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
             <Card padding="lg">
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <h2 className="text-responsive-xl font-semibold text-gray-900 dark:text-gray-100">
+                  <h2 className="text-responsive-xl font-semibold text-white font-primary">
                     User Management
                   </h2>
                   <Button
@@ -215,7 +215,7 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
                 </div>
                 
                 {loading && !users.length ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <div className="text-center py-8 text-gray-600">
                     Loading users...
                   </div>
                 ) : (
@@ -234,30 +234,30 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
                                 />
                               )}
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                <p className="text-sm font-medium text-black truncate">
                                   {user.displayName || 'No name'}
                                 </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                                <p className="text-xs text-gray-600 truncate">
                                   {user.email}
                                 </p>
                               </div>
                               <span className={`px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ${
                                 user.role === 'admin' 
-                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
-                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                  ? 'bg-black text-white' 
+                                  : 'bg-gray-200 text-black border border-gray-400'
                               }`}>
                                 {user.role}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-300">
+                              <span className="text-xs text-gray-500">
                                 Joined {user.createdAt.toLocaleDateString()}
                               </span>
                               {user.uid !== userProfile.uid ? (
                                 <select
                                   value={user.role}
                                   onChange={(e) => handleRoleUpdate(user.uid, e.target.value as UserRole)}
-                                  className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                  className="text-xs border border-gray-400 rounded-md px-2 py-1 bg-white text-black"
                                 >
                                   <option value="user">User</option>
                                   <option value="admin">Admin</option>
@@ -273,27 +273,27 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
 
                     {/* Desktop table */}
                     <div className="hidden sm:block overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                      <table className="min-w-full divide-y divide-gray-300">
+                        <thead className="bg-gray-100">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                               User
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                               Email
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                               Role
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                               Joined
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                               Actions
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody className="bg-white divide-y divide-gray-300">
                           {users.map((user) => (
                             <tr key={user.uid}>
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -305,24 +305,24 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
                                       className="w-8 h-8 rounded-full mr-3"
                                     />
                                   )}
-                                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  <div className="text-sm font-medium text-black">
                                     {user.displayName || 'No name'}
                                   </div>
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900 dark:text-gray-100">{user.email}</div>
+                                <div className="text-sm text-black">{user.email}</div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                   user.role === 'admin' 
-                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
-                                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                    ? 'bg-black text-white' 
+                                    : 'bg-gray-200 text-black border border-gray-400'
                                 }`}>
                                   {user.role}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {user.createdAt.toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -330,7 +330,7 @@ export default function Dashboard({ initialTab = 'posts' }: DashboardProps) {
                                   <select
                                     value={user.role}
                                     onChange={(e) => handleRoleUpdate(user.uid, e.target.value as UserRole)}
-                                    className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                    className="text-sm border border-gray-400 rounded-md px-2 py-1 bg-white text-black"
                                   >
                                     <option value="user">User</option>
                                     <option value="admin">Admin</option>

@@ -152,7 +152,7 @@ export default function PostsDashboard() {
             <select
               value={viewMode}
               onChange={(e) => handleViewModeChange(e.target.value as ViewMode)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm text-black"
             >
               <option value="all">All Posts</option>
               <option value="my-posts">My Posts</option>

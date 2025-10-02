@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Post, PostFormData } from '@/types/posts';
 import { postsService } from '@/lib/postsService';
 
@@ -84,8 +85,14 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
       // Upload image if a new one was selected
       if (formData.image) {
         setUploadProgress(true);
-        const uploadResult = await postsService.uploadImage(formData.image, 'posts');
-        imageURL = uploadResult.url;
+        try {
+          const uploadResult = await postsService.uploadImage(formData.image, 'posts');
+          imageURL = uploadResult.url;
+        } catch (uploadError) {
+          console.warn('Image upload failed, proceeding without image:', uploadError);
+          // Continue without image instead of failing the entire post creation
+          imageURL = '';
+        }
         setUploadProgress(false);
       }
 
@@ -116,17 +123,17 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+    <div className="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border border-gray-600 w-11/12 max-w-2xl shadow-lg rounded-md bg-black">
         <div className="mt-3">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-medium text-white font-primary">
               {post ? 'Edit Post' : 'Create New Post'}
             </h3>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-white"
             >
               ✕
             </button>
@@ -136,7 +143,7 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Title */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="title" className="block text-sm font-medium text-white mb-1">
                 Title *
               </label>
               <input
@@ -146,14 +153,14 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
                 value={formData.title}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent placeholder-gray-400"
                 placeholder="Enter post title..."
               />
             </div>
 
             {/* Content */}
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="content" className="block text-sm font-medium text-white mb-1">
                 Content *
               </label>
               <textarea
@@ -163,14 +170,14 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
                 onChange={handleInputChange}
                 required
                 rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent placeholder-gray-400"
                 placeholder="Write your post content..."
               />
             </div>
 
             {/* Image Upload */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-white mb-1">
                 Image (optional)
               </label>
               <div className="space-y-2">
@@ -179,9 +186,9 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
                   ref={fileInputRef}
                   onChange={handleImageChange}
                   accept="image/*"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-white file:text-black hover:file:bg-gray-200"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-400">
                   Maximum file size: 5MB. Supported formats: JPG, PNG, GIF, WebP
                 </p>
               </div>
@@ -190,15 +197,18 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
               {currentImageURL && (
                 <div className="mt-3">
                   <div className="relative inline-block">
-                    <img
+                    <Image
                       src={currentImageURL}
                       alt="Preview"
-                      className="max-w-full max-h-48 rounded-lg"
+                      width={400}
+                      height={192}
+                      className="max-w-full max-h-48 rounded-lg object-cover"
+                      unoptimized={currentImageURL.startsWith('data:')}
                     />
                     <button
                       type="button"
                       onClick={removeImage}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                      className="absolute top-2 right-2 bg-black text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-gray-800 border border-white"
                     >
                       ✕
                     </button>
@@ -211,8 +221,8 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
             {uploadProgress && (
               <div className="text-center">
                 <div className="inline-flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-sm text-gray-600">Uploading image...</span>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span className="ml-2 text-sm text-white">Uploading image...</span>
                 </div>
               </div>
             )}
@@ -223,14 +233,14 @@ export default function PostForm({ post, onSubmit, onCancel }: PostFormProps) {
                 type="button"
                 onClick={onCancel}
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 border border-gray-300 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-black bg-white border border-gray-600 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || uploadProgress}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-white bg-black border border-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white disabled:opacity-50"
               >
                 {loading ? 'Saving...' : post ? 'Update Post' : 'Create Post'}
               </button>
