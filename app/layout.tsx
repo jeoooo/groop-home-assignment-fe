@@ -18,7 +18,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Groop Home Assignment",
+  title: "Groop",
   description: "Authentication system with admin and user roles",
 };
 

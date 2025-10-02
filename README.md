@@ -1,32 +1,59 @@
-# Groop Home Assignment - Authentication System
+# Groop Home Assignment - Frontend
 
-A complete authentication system built with Next.js, Firebase Auth, and Firestore, featuring admin and user roles.
+A complete authentication system built with Next.js, Firebase Auth, and Firestore, featuring admin and user roles with posts management.
 
 ## Features
 
 - ✅ Firebase Authentication with email/password
 - ✅ Role-based access control (Admin & User)
-- ✅ Firestore database for user profiles
-- ✅ Firebase emulators for local development
-- ✅ Protected routes based on authentication and roles
+- ✅ Posts CRUD operations with image upload
+- ✅ User profile management
 - ✅ Admin dashboard for user management
-- ✅ User dashboard with account information
+- ✅ Pin/unpin posts (admin only)
 - ✅ Responsive design with Tailwind CSS
 - ✅ TypeScript support
+- ✅ Phosphor icons integration
 
-## Quick Start
+## 🚀 Development Setup
 
 ### Prerequisites
 
 - Node.js 18+ installed
-- Firebase CLI installed (`npm install -g firebase-tools`)
+- Backend server running with Firebase emulators
 
-### 1. Environment Setup
-
-First, copy the environment example file and configure your Firebase settings:
+### Setup and Run
 
 ```bash
-cp .env.example .env.local
+npm install
+npm run dev
+```
+
+The frontend will run on `http://localhost:3000`
+
+## 📁 Project Structure
+
+```
+groop-home-assignment-fe/
+├── app/                    # Next.js 14 app router
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx          # Home page
+│   └── admin/            # Admin-only pages
+├── components/           # React components
+│   ├── auth/            # Authentication components
+│   ├── ui/              # Reusable UI components
+│   ├── Dashboard.tsx    # Main dashboard
+│   ├── PostCard.tsx     # Post display component
+│   ├── PostForm.tsx     # Post creation/editing
+│   └── UserProfile.tsx  # User profile management
+├── contexts/            # React contexts
+│   └── AuthContext.tsx  # Authentication state
+├── lib/                # Utility libraries
+│   ├── api.ts          # API endpoints
+│   ├── apiClient.ts    # HTTP client
+│   ├── config.ts       # Configuration
+│   └── firebase.ts     # Firebase setup
+└── types/              # TypeScript definitions
 ```
 
 Edit `.env.local` with your Firebase project configuration:
